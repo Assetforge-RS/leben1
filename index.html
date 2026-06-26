@@ -1,1 +1,86 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Lebensrad – Familienmodell</title>
+  <style>
+    :root{--bg:#f4f6f8;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--green:#15803d;--green-soft:#dcfce7;--yellow:#facc15;--yellow-soft:#fef9c3;--orange:#f97316;--orange-soft:#ffedd5;--red:#dc2626;--red-soft:#fee2e2}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#f8fafc,#eef2f7);color:var(--text);padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+    .app{max-width:760px;margin:0 auto;padding:12px 0 24px}
+    header,.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;box-shadow:0 8px 24px rgba(15,23,42,.06);margin-bottom:12px;overflow:hidden}
+    header{text-align:center;padding:18px 16px}
+    h1{font-size:28px;margin:0 0 6px;line-height:1.08}
+    .subtitle{color:var(--muted);font-size:15px}
+    .row{display:grid;grid-template-columns:34px 1fr 46px;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .row:last-child{border-bottom:none}.icon{font-size:22px;text-align:center;width:34px}
+    label{font-size:15px;font-weight:650;display:block;margin-bottom:7px}
+    input[type=range]{width:100%;accent-color:var(--green)}
+    .value{font-size:19px;font-weight:800;text-align:right}.red{color:var(--red)}.orange{color:var(--orange)}.yellow{color:#ca8a04}.green{color:var(--green)}
+    .chart-wrap{padding:12px}canvas{width:100%;height:auto;display:block;margin:0 auto;background:white;border-radius:18px;border:1px solid var(--line)}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 12px 14px;font-size:13px;color:#374151}.pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 9px}.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+    .summary,.tips{padding:14px}.scorebox,.alarm{border-radius:16px;padding:14px;margin-bottom:10px;line-height:1.4}.scorebox{font-weight:750}.good{background:var(--green-soft);color:#14532d;border:1px solid #86efac}.mid{background:var(--yellow-soft);color:#713f12;border:1px solid #fde68a}.alarm{background:var(--red-soft);color:#7f1d1d;border:1px solid #fecaca}
+    .alarm h2,.tips h2{margin:0 0 8px;font-size:18px}.alarm ul{margin:8px 0 0 18px;padding:0}.alarm li{margin:6px 0}
+    .tip{border-top:1px solid var(--line);padding:11px 0;line-height:1.35}.tip:first-of-type{border-top:none}.tip-title{font-weight:800;margin-bottom:4px}.tip-score{font-weight:800;border-radius:999px;padding:2px 8px;font-size:13px;margin-left:4px}.tip-score.red{background:var(--red-soft);color:var(--red)}.tip-score.orange{background:var(--orange-soft);color:var(--orange)}.tip-score.yellow{background:var(--yellow-soft);color:#ca8a04}.tip-score.green{background:var(--green-soft);color:var(--green)}
+    .buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}button{border:0;border-radius:16px;padding:13px 12px;font-size:16px;font-weight:800;background:#111827;color:white;cursor:pointer}button.secondary{background:#e5e7eb;color:#111827}
+    @media(max-width:480px){h1{font-size:24px}.row{grid-template-columns:30px 1fr 38px;padding:9px 10px}.icon{font-size:20px;width:30px}label{font-size:14px}.value{font-size:18px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header><h1>Lebensrad – Familienmodell</h1><div class="subtitle">Bewertung von 1 sehr schlecht bis 10 optimal</div></header>
+  <section class="card" id="controls"></section>
+  <section class="card chart-wrap">
+    <canvas id="radar" width="900" height="900"></canvas>
+    <div class="legend">
+      <span class="pill"><span class="dot" style="background:#dc2626"></span>1–2 Alarm</span>
+      <span class="pill"><span class="dot" style="background:#f97316"></span>3 kritisch</span>
+      <span class="pill"><span class="dot" style="background:#facc15"></span>4–6 mittelmäßig</span>
+      <span class="pill"><span class="dot" style="background:#16a34a"></span>7–10 gut</span>
+    </div>
+  </section>
+  <section class="card summary" id="summary"></section>
+  <section class="card tips" id="tips"></section>
+  <section class="card buttons"><button class="secondary" onclick="resetValues()">Zurücksetzen</button><button onclick="saveImage()">Als Bild speichern</button></section>
+</div>
 
+<script>
+const factors=[
+{icon:"❤️",name:"Partnerschaft / Beziehung",value:8,low:"Plane bewusst Paarzeit ohne Handy. Schon 30 Minuten ehrliches Gespräch pro Woche helfen.",mid:"Haltet kleine Rituale fest: gemeinsamer Kaffee, Spaziergang oder kurzer Wochenrückblick.",high:"Sehr gut. Achtet darauf, Wertschätzung regelmäßig auszusprechen."},
+{icon:"👨‍👩‍👧‍👦",name:"Familienharmonie",value:9,low:"Macht eine kleine Familienrunde: Was läuft gut, was nervt, was ändern wir diese Woche?",mid:"Plant feste Familienzeit, bei der niemand nebenbei arbeitet oder aufs Handy schaut.",high:"Stark. Bewahrt euch gemeinsame Rituale und klare Absprachen."},
+{icon:"🍏",name:"Persönliche Gesundheit",value:7,low:"Setze einen Arzttermin oder starte mit 20 Minuten Bewegung an drei Tagen pro Woche.",mid:"Kleine Routinen bringen viel: Wasser, Spaziergang, weniger Zucker, feste Schlafenszeit.",high:"Gut. Stabil halten und nicht erst reagieren, wenn es schlechter wird."},
+{icon:"🌙",name:"Schlafqualität",value:6,low:"Alarm: Schlaf priorisieren. Handy 45 Minuten vorher weg und feste Zubettgehzeit testen.",mid:"Verbessere eine Sache: dunkler Raum, weniger Bildschirm, kein spätes schweres Essen.",high:"Gut. Behalte feste Zeiten bei und schütze deinen Schlaf konsequent."},
+{icon:"💰",name:"Finanzielle Sicherheit",value:8,low:"Erstelle einen einfachen Überblick: Einnahmen, Fixkosten, Rücklagen, offene Risiken.",mid:"Baue einen Notgroschen auf und prüfe monatlich unnötige Abos oder Ausgaben.",high:"Sehr gut. Prüfe jährlich Versicherungen, Rücklagen und größere Ziele."},
+{icon:"💼",name:"Berufliche Zufriedenheit",value:7,low:"Kläre, was konkret belastet: Aufgabe, Team, Chef, Zeitdruck oder Sinn. Dann eine Maßnahme wählen.",mid:"Suche dir ein kleines Projekt, das dich motiviert, oder sprich über Prioritäten.",high:"Gut. Nutze die Zufriedenheit, um dich gezielt weiterzuentwickeln."},
+{icon:"🧘",name:"Stressniveau",value:5,low:"Alarm: Sofort entlasten. Eine Pflicht streichen, Pausen blocken und Unterstützung holen.",mid:"Baue feste Mini-Pausen ein und reduziere parallele Aufgaben.",high:"Gut. Weiter auf Warnzeichen achten und Erholungszeiten schützen."},
+{icon:"🏡",name:"Zuhause / Wohnsituation",value:9,low:"Identifiziere den größten Störfaktor zu Hause und löse genau diesen zuerst.",mid:"Schaffe eine kleine Ordnungsecke oder verbessere Licht, Ruhe oder Stauraum.",high:"Sehr gut. Zuhause ist eine Kraftquelle – pflegen, nicht überladen."},
+{icon:"🛡️",name:"Sicherheitsgefühl",value:9,low:"Kläre die Ursache: Geld, Gesundheit, Beziehung, Arbeit oder Wohnumfeld. Dann konkret absichern.",mid:"Notfallplan, Rücklagen und klare Absprachen erhöhen das Gefühl von Sicherheit.",high:"Sehr gut. Sicherheit gibt Energie für andere Lebensbereiche."},
+{icon:"👥",name:"Soziales Netzwerk",value:7,low:"Melde dich bei einer Person, die dir wichtig ist. Nicht warten, bis es perfekt passt.",mid:"Plane feste Treffen oder Telefonate, sonst verschwinden Kontakte im Alltag.",high:"Gut. Pflege dein Netzwerk aktiv und nicht nur bei Bedarf."},
+{icon:"🚲",name:"Freizeit & Hobbys",value:8,low:"Blocke einen festen Termin pro Woche nur für dich. Freizeit ist kein Luxus.",mid:"Wähle ein Hobby bewusst aus und plane es wie einen echten Termin.",high:"Sehr gut. Hobbys sind Ausgleich und Identität – beibehalten."},
+{icon:"🌴",name:"Urlaube & Erholung",value:6,low:"Plane kurzfristig einen kleinen Erholungstag oder Wochenendausflug, auch ohne großen Urlaub.",mid:"Erholung braucht Planung: kurze Pausen, Mini-Auszeiten und echte freie Tage.",high:"Gut. Achte darauf, Urlaub nicht zu voll zu packen."},
+{icon:"📘",name:"Persönliche Entwicklung",value:8,low:"Setze ein kleines Lernziel für 30 Tage: Buch, Kurs, Sport, Sprache oder Projekt.",mid:"Wähle ein Thema, das dich wirklich interessiert, nicht nur eines, das nützlich wirkt.",high:"Sehr gut. Weiter wachsen, aber ohne dich zu überfordern."},
+{icon:"⚖️",name:"Work-Life-Balance",value:6,low:"Alarm: Grenzen setzen. Feierabendzeit definieren und eine Verpflichtung reduzieren.",mid:"Lege klare Zeitfenster für Arbeit, Familie und eigene Erholung fest.",high:"Gut. Balance bleibt nur stabil, wenn Grenzen sichtbar sind."},
+{icon:"😊",name:"Allgemeine Lebenszufriedenheit",value:8,low:"Schreibe drei Dinge auf: Was fehlt, was belastet, was wäre diese Woche ein kleiner Gewinn?",mid:"Mehr Fokus auf gute Momente: jeden Abend eine Sache notieren, die gelungen ist.",high:"Sehr gut. Bewusst genießen und Dankbarkeit nicht dem Zufall überlassen."}
+];
+const controls=document.getElementById("controls"),summary=document.getElementById("summary"),tips=document.getElementById("tips"),canvas=document.getElementById("radar"),ctx=canvas.getContext("2d");
+function cls(v){return v<=2?"red":v===3?"orange":v<=6?"yellow":"green"}
+function buildControls(){controls.innerHTML="";factors.forEach((f,i)=>{let row=document.createElement("div");row.className="row";row.innerHTML=`<div class="icon">${f.icon}</div><div><label>${i+1}. ${f.name}</label><input type="range" min="1" max="10" value="${f.value}" data-i="${i}"></div><div class="value ${cls(f.value)}" id="val${i}">${f.value}</div>`;controls.appendChild(row)});document.querySelectorAll("input[type=range]").forEach(s=>s.addEventListener("input",e=>{let i=+e.target.dataset.i;factors[i].value=+e.target.value;let v=document.getElementById("val"+i);v.textContent=factors[i].value;v.className="value "+cls(factors[i].value);update()}))}
+function zone(cx,cy,r,n,color){ctx.beginPath();for(let i=0;i<n;i++){let a=-Math.PI/2+i*2*Math.PI/n,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.closePath();ctx.fillStyle=color;ctx.fill()}
+function wrap(text,x,y,maxWidth,lineHeight){let words=text.split(" "),line="",lines=[];for(let n=0;n<words.length;n++){let test=line+words[n]+" ";if(ctx.measureText(test).width>maxWidth&&n>0){lines.push(line.trim());line=words[n]+" "}else line=test}lines.push(line.trim());let start=y-((lines.length-1)*lineHeight)/2;lines.forEach((l,idx)=>ctx.fillText(l,x,start+idx*lineHeight))}
+function drawRadar(){let w=canvas.width,h=canvas.height,cx=w/2,cy=h/2,r=Math.min(w,h)*.31,n=factors.length;ctx.clearRect(0,0,w,h);ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);zone(cx,cy,r,n,"rgba(22,163,74,.20)");zone(cx,cy,r*.6,n,"rgba(250,204,21,.28)");zone(cx,cy,r*.3,n,"rgba(249,115,22,.28)");zone(cx,cy,r*.2,n,"rgba(220,38,38,.34)");
+for(let level=1;level<=10;level++){ctx.beginPath();for(let i=0;i<n;i++){let a=-Math.PI/2+i*2*Math.PI/n,rr=r*level/10,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.closePath();ctx.strokeStyle=level===10?"#cbd5e1":"#e5e7eb";ctx.lineWidth=level===10?2:1;ctx.stroke()}
+for(let i=0;i<n;i++){let a=-Math.PI/2+i*2*Math.PI/n;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.strokeStyle="#e5e7eb";ctx.stroke();let lx=cx+Math.cos(a)*(r+95),ly=cy+Math.sin(a)*(r+95);ctx.fillStyle="#111827";ctx.font="600 22px -apple-system,BlinkMacSystemFont,Segoe UI,Arial";ctx.textAlign=lx<cx-20?"right":lx>cx+20?"left":"center";ctx.textBaseline="middle";wrap(`${i+1}. ${factors[i].name}`,lx,ly,125,25)}
+ctx.beginPath();factors.forEach((f,i)=>{let a=-Math.PI/2+i*2*Math.PI/n,rr=r*f.value/10,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.closePath();ctx.fillStyle="rgba(37,99,235,.25)";ctx.strokeStyle="#166534";ctx.lineWidth=5;ctx.fill();ctx.stroke();
+factors.forEach((f,i)=>{let a=-Math.PI/2+i*2*Math.PI/n,rr=r*f.value/10,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=f.value<=2?"#dc2626":f.value===3?"#f97316":f.value<=6?"#facc15":"#16a34a";ctx.stroke();ctx.fillStyle=ctx.strokeStyle;ctx.font="800 24px -apple-system,BlinkMacSystemFont,Segoe UI,Arial";ctx.textAlign="center";ctx.fillText(f.value,x+Math.cos(a)*28,y+Math.sin(a)*28)});
+ctx.fillStyle="#374151";ctx.font="700 18px -apple-system,BlinkMacSystemFont,Segoe UI,Arial";ctx.textAlign="center";for(let level=1;level<=10;level++)ctx.fillText(String(level),cx-18,cy-r*level/10+6)}
+function updateSummary(){let avg=factors.reduce((s,f)=>s+f.value,0)/factors.length,low=factors.filter(f=>f.value<=3),html=avg>7?`<div class="scorebox good">✅ Durchschnitt: ${avg.toFixed(1)} von 10 – du hast ein tolles Leben. Viele Bereiche sind stabil und geben dir Kraft.</div>`:`<div class="scorebox mid">📊 Durchschnitt: ${avg.toFixed(1)} von 10 – solide Basis. Es gibt aber klare Hebel zur Verbesserung.</div>`;if(low.length){html+=`<div class="alarm"><h2>🚨 Alarmbereich 1–3</h2><div>Diese Punkte brauchen Aufmerksamkeit:</div><ul>`;low.forEach(f=>html+=`<li><strong>${f.name}:</strong> Wert ${f.value}. ${f.value<=2?f.low:f.mid}</li>`);html+=`</ul></div>`}summary.innerHTML=html}
+function updateTips(){tips.innerHTML=`<h2>💡 Tipps je Bereich</h2>`+factors.map(f=>{let c=cls(f.value),tip=f.value<=2?f.low:f.value===3?f.mid:f.value<=6?f.mid:f.high;return `<div class="tip"><div class="tip-title">${f.icon} ${f.name} <span class="tip-score ${c}">${f.value}/10</span></div><div>${tip}</div></div>`}).join("")}
+function update(){drawRadar();updateSummary();updateTips()}
+function resetValues(){[8,9,7,6,8,7,5,9,9,7,8,6,8,6,8].forEach((v,i)=>factors[i].value=v);buildControls();update()}
+function saveImage(){let link=document.createElement("a");link.download="lebensrad-familienmodell.png";link.href=canvas.toDataURL("image/png");link.click()}
+buildControls();update();
+</script>
+</body>
+</html>
